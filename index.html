@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KasirPintar — Kalkulator Kembalian Rupiah Estetis</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono untuk angka -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    animation: {
+                        'blob': 'blob 10s infinite',
+                        'fade-in-up': 'fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -40px) scale(1.08)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.95)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(12px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        pop: {
+                            '0%': { transform: 'scale(0.92)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-rose-50 via-indigo-50 to-teal-50 text-slate-800 antialiased selection:bg-indigo-200 selection:text-indigo-900 relative overflow-x-hidden flex flex-col justify-between">
+
+    <!-- Dekorasi Latar Belakang Pastel (Ambient Blobs) -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div class="absolute top-[-10%] left-[-5%] w-80 h-80 sm:w-96 sm:h-96 bg-purple-200/50 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
+        <div class="absolute top-[15%] right-[-5%] w-80 h-80 sm:w-96 sm:h-96 bg-teal-200/50 rounded-full mix-blend-multiply filter blur-3xl animate-blob" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-[-10%] left-[20%] w-80 h-80 sm:w-96 sm:h-96 bg-rose-200/50 rounded-full mix-blend-multiply filter blur-3xl animate-blob" style="animation-delay: 4s;"></div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <header class="w-full max-w-5xl mx-auto px-4 sm:px-6 pt-6 pb-2 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+                <i data-lucide="wallet" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-800">KasirPintar<span class="text-indigo-500">.id</span></h1>
+                <p class="text-xs text-slate-500 font-medium">Kalkulator Kembalian & Pecahan Rupiah</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-white/70 backdrop-blur-md border border-white/80 text-slate-600 shadow-sm">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                Algoritma Greedy Aktif
+            </span>
+        </div>
+    </header>
+
+    <!-- Konten Utama -->
+    <main class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 flex-grow">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Kolom Kiri: Panel Input Transaksi (Glassmorphism Card) -->
+            <section class="lg:col-span-6 bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 space-y-6">
+                <div class="flex items-center justify-between border-b border-slate-200/60 pb-4">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                            <i data-lucide="calculator" class="w-5 h-5"></i>
+                        </div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-800">Detail Pembayaran</h2>
+                    </div>
+                    <button id="btnReset" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100/80 hover:bg-rose-100 hover:text-rose-600 active:scale-95 transition-all duration-200 cursor-pointer">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        Reset
+                    </button>
+                </div>
+
+                <!-- Input 1: Total Belanja -->
+                <div class="space-y-2">
+                    <label for="inputTotal" class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-600">
+                        <span>Total Belanja</span>
+                        <span class="text-[11px] font-normal text-slate-400">Masukkan nominal tagihan</span>
+                    </label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 font-bold text-base sm:text-lg group-focus-within:text-indigo-500 transition-colors">Rp</span>
+                        <input 
+                            type="text" 
+                            id="inputTotal" 
+                            inputmode="numeric"
+                            placeholder="0" 
+                            autocomplete="off"
+                            class="w-full pl-12 pr-4 py-3.5 sm:py-4 bg-white/90 border border-slate-200/80 rounded-2xl text-xl sm:text-2xl font-mono font-bold text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 focus:border-indigo-400 transition-all shadow-inner"
+                        >
+                    </div>
+                </div>
+
+                <!-- Input 2: Uang Dibayar -->
+                <div class="space-y-2">
+                    <label for="inputPaid" class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-600">
+                        <span>Uang Dibayar</span>
+                        <span class="text-[11px] font-normal text-slate-400">Uang tunai dari pembeli</span>
+                    </label>
+                    <div class="relative group">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400 font-bold text-base sm:text-lg group-focus-within:text-teal-500 transition-colors">Rp</span>
+                        <input 
+                            type="text" 
+                            id="inputPaid" 
+                            inputmode="numeric"
+                            placeholder="0" 
+                            autocomplete="off"
+                            class="w-full pl-12 pr-4 py-3.5 sm:py-4 bg-white/90 border border-slate-200/80 rounded-2xl text-xl sm:text-2xl font-mono font-bold text-slate-800 placeholder-slate-300 focus:outline-none focus:ring-4 focus:ring-teal-500/15 focus:border-teal-400 transition-all shadow-inner"
+                        >
+                    </div>
+                </div>
+
+                <!-- Tombol Cepat (Quick Cash Buttons) -->
+                <div class="space-y-2.5 pt-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-500 flex items-center gap-1.5">
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+                            Pilih Cepat Uang Tunai
+                        </span>
+                        <span class="text-[11px] text-slate-400">Klik untuk mengisi</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2.5">
+                        <button type="button" id="btnExact" class="quick-btn col-span-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-md shadow-indigo-500/20 hover:opacity-95 active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer">
+                            <i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>
+                            Uang Pas
+                        </button>
+                        <button type="button" data-amount="10000" class="quick-cash py-2.5 px-3 rounded-xl bg-white/80 hover:bg-purple-50 border border-slate-200/80 hover:border-purple-300 text-slate-700 hover:text-purple-700 font-mono font-semibold text-xs sm:text-sm shadow-sm active:scale-95 transition-all cursor-pointer">
+                            Rp 10.000
+                        </button>
+                        <button type="button" data-amount="20000" class="quick-cash py-2.5 px-3 rounded-xl bg-white/80 hover:bg-emerald-50 border border-slate-200/80 hover:border-emerald-300 text-slate-700 hover:text-emerald-700 font-mono font-semibold text-xs sm:text-sm shadow-sm active:scale-95 transition-all cursor-pointer">
+                            Rp 20.000
+                        </button>
+                        <button type="button" data-amount="50000" class="quick-cash py-2.5 px-3 rounded-xl bg-white/80 hover:bg-sky-50 border border-slate-200/80 hover:border-sky-300 text-slate-700 hover:text-sky-700 font-mono font-semibold text-xs sm:text-sm shadow-sm active:scale-95 transition-all cursor-pointer">
+                            Rp 50.000
+                        </button>
+                        <button type="button" data-amount="100000" class="quick-cash py-2.5 px-3 rounded-xl bg-white/80 hover:bg-rose-50 border border-slate-200/80 hover:border-rose-300 text-slate-700 hover:text-rose-700 font-mono font-semibold text-xs sm:text-sm shadow-sm active:scale-95 transition-all cursor-pointer">
+                            Rp 100.000
+                        </button>
+                        <button type="button" data-add="5000" class="quick-add py-2.5 px-3 rounded-xl bg-amber-50/80 hover:bg-amber-100 border border-amber-200/80 text-amber-800 font-mono font-semibold text-xs sm:text-sm shadow-sm active:scale-95 transition-all cursor-pointer" title="Tambah Rp 5.000 ke uang dibayar">
+                            + Rp 5.000
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Kolom Kanan: Hasil Kembalian & Rincian Pecahan Rupiah -->
+            <section class="lg:col-span-6 space-y-6">
+                
+                <!-- Kartu Total Kembalian / Status -->
+                <div id="statusCard" class="bg-white/75 backdrop-blur-xl border border-white/80 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 transition-all duration-300 relative overflow-hidden">
+                    <!-- Aksen Garis Atas -->
+                    <div id="statusAccent" class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-400 via-purple-400 to-teal-400 transition-colors duration-300"></div>
+
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <span id="statusBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 mb-3 transition-colors">
+                                <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                                Menunggu Input
+                            </span>
+                            <p id="statusLabel" class="text-xs sm:text-sm font-medium text-slate-500">Total Uang Kembalian</p>
+                            <div class="mt-1 flex items-baseline gap-1.5">
+                                <span id="changeCurrency" class="text-xl sm:text-2xl font-bold text-slate-400">Rp</span>
+                                <h3 id="changeDisplay" class="text-3xl sm:text-5xl font-mono font-extrabold tracking-tight text-slate-800 transition-colors">0</h3>
+                            </div>
+                        </div>
+
+                        <!-- Tombol Salin Struk -->
+                        <button 
+                            type="button" 
+                            id="btnCopy" 
+                            disabled
+                            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition-all shadow-md shadow-slate-900/15 cursor-pointer shrink-0"
+                        >
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                            <span>Salin Struk</span>
+                        </button>
+                    </div>
+
+                    <!-- Pesan Peringatan Estetis (Jika Uang Kurang) -->
+                    <div id="shortageAlert" class="hidden mt-5 p-4 rounded-2xl bg-rose-50/90 border border-rose-200/80 flex items-center gap-3.5 animate-pop">
+                        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                        </div>
+                        <div class="text-xs sm:text-sm">
+                            <p class="font-bold text-rose-800">Uang Pembayaran Belum Cukup</p>
+                            <p class="text-rose-600 mt-0.5">Pembeli masih kekurangan sebesar <span id="shortageAmount" class="font-mono font-bold underline decoration-rose-300">Rp 0</span> lagi.</p>
+                        </div>
+                    </div>
+
+                    <!-- Pesan Uang Pas -->
+                    <div id="exactAlert" class="hidden mt-5 p-4 rounded-2xl bg-emerald-50/90 border border-emerald-200/80 flex items-center gap-3.5 animate-pop">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        </div>
+                        <div class="text-xs sm:text-sm">
+                            <p class="font-bold text-emerald-800">Transaksi Uang Pas!</p>
+                            <p class="text-emerald-600 mt-0.5">Tidak ada uang kembalian yang perlu diberikan kepada pembeli.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kartu Rincian Pecahan Uang (Breakdown) -->
+                <div class="bg-white/70 backdrop-blur-xl border border-white/80 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50">
+                    <div class="flex items-center justify-between mb-5">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 bg-teal-50 text-teal-600 rounded-xl">
+                                <i data-lucide="banknote" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base sm:text-lg font-bold text-slate-800">Rincian Pecahan Rupiah</h3>
+                                <p class="text-xs text-slate-500">Kombinasi lembar & koin paling efisien</p>
+                            </div>
+                        </div>
+                        <span id="totalPiecesBadge" class="hidden px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                            0 Pecahan
+                        </span>
+                    </div>
+
+                    <!-- Empty State sebelum ada kembalian -->
+                    <div id="emptyBreakdown" class="py-10 px-4 text-center border-2 border-dashed border-slate-200/80 rounded-2xl bg-white/40">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="coins" class="w-6 h-6"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-600">Belum Ada Rincian Kembalian</p>
+                        <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Masukkan total belanja dan uang dibayar untuk melihat rincian pecahan uang kertas dan logam.</p>
+                    </div>
+
+                    <!-- Grid Kartu Pecahan Uang -->
+                    <div id="breakdownGrid" class="hidden grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Item pecahan akan dirender di sini oleh JavaScript -->
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- Notifikasi Toast (Pengganti alert) -->
+    <div id="toastNotification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-4 transition-all duration-300">
+        <div class="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-slate-900/95 backdrop-blur-md text-white text-xs sm:text-sm font-semibold shadow-2xl border border-white/10">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+            <span id="toastMessage">Rincian struk berhasil disalin!</span>
+        </div>
+    </div>
+
+    <!-- Footer Portofolio -->
+    <footer class="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 text-center text-xs text-slate-500">
+        <p>Dibuat dengan estetika <span class="font-semibold text-slate-700">Pastel Glassmorphism</span> &bull; Siap untuk proyek portofolio GitHub Anda.</p>
+    </footer>
+
+    <script>
+        /**
+         * Konfigurasi Pecahan Mata Uang Rupiah (IDR)
+         * Diurutkan dari terbesar ke terkecil untuk Algoritma Greedy.
+         * Warna disesuaikan dengan desain asli uang kertas & koin Bank Indonesia.
+         */
+        const RUPIAH_DENOMINATIONS = [
+            {
+                value: 100000,
+                label: 'Rp 100.000',
+                type: 'kertas',
+                unit: 'lembar',
+                hero: 'Soekarno - Hatta',
+                // Merah Pastel / Pink-Red khas 100rb
+                cardBg: 'bg-gradient-to-br from-rose-50 to-red-100/90 border-rose-200/90',
+                badgeBg: 'bg-rose-500 text-white',
+                textColor: 'text-rose-900',
+                subColor: 'text-rose-600/80',
+                iconColor: 'text-rose-500'
+            },
+            {
+                value: 50000,
+                label: 'Rp 50.000',
+                type: 'kertas',
+                unit: 'lembar',
+                hero: 'Djuanda Kartawidjaja',
+                // Biru khas 50rb
+                cardBg: 'bg-gradient-to-br from-sky-50 to-blue-100/90 border-sky-200/90',
+                badgeBg: 'bg-sky-600 text-white',
+                textColor: 'text-sky-900',
+                subColor: 'text-sky-600/80',
+                iconColor: 'text-sky-500'
+            },
+            {
+                value: 20000,
+                label: 'Rp 20.000',
+                type: 'kertas',
+                unit: 'lembar',
+                hero: 'G.S.S.J. Ratulangi',
+                // Hijau khas 20rb
+                cardBg: 'bg-gradient-to-br from-emerald-50 to-teal-100/90 border-emerald-200/90',
+                badgeBg: 'bg-emerald-600 text-white',
+                textColor: 'text-emerald-900',
+                subColor: 'text-emerald-600/80',
+                iconColor: 'text-emerald-500'
+            },
+            {
+                value: 10000,
+                label: 'Rp 10.000',
+                type: 'kertas',
+                unit: 'lembar',
+                hero: 'Frans Kaisiepo',
+                // Ungu khas 10rb
+                cardBg: 'bg-gradient-to-br from-purple-50 to-fuchsia-100/90 border-purple-200/90',
+                badgeBg: 'bg-purple-600 text-white',
+                textColor: 'text-purple-900',
+                subColor: 'text-purple-600/80',
+                iconColor: 'text-purple-500'
+            },
+            {
+                value: 5000,
+                label: 'Rp 5.000',
+                type: 'kertas',
+                unit: 'lembar',
+                hero: 'Idham Chalid',
+                // Cokelat-Oranye khas 5rb
+                cardBg: 'bg-gradient-to-br from-amber-50 to-orange-100/90 border-amber-200/90',
+                badgeBg: 'bg-amber-600 text-white',
+                textColor: 'text-amber-950',
+                subColor: 'text-amber-700/80',
+                iconColor: 'text-amber-600'
+            },
+            {
+                value: 2000,
+                label: 'Rp 2.000',
+                type: 'kertas',
+                unit: 'lembar',
+                hero: 'Mohammad Hoesni Thamrin',
+                // Abu-abu kebiruan khas 2rb
+                cardBg: 'bg-gradient-to-br from-slate-100 to-zinc-200/80 border-slate-300/80',
+                badgeBg: 'bg-slate-600 text-white',
+                textColor: 'text-slate-800',
+                subColor: 'text-slate-500',
+                iconColor: 'text-slate-500'
+            },
+            {
+                value: 1000,
+                label: 'Rp 1.000',
+                type: 'kertas',
+                unit: 'lembar',
+                hero: 'Tjut Meutia',
+                // Kuning-Hijau lembut khas 1rb
+                cardBg: 'bg-gradient-to-br from-lime-50 to-yellow-100/90 border-lime-200/90',
+                badgeBg: 'bg-lime-600 text-white',
+                textColor: 'text-lime-950',
+                subColor: 'text-lime-700/80',
+                iconColor: 'text-lime-600'
+            },
+            {
+                value: 500,
+                label: 'Rp 500',
+                type: 'koin',
+                unit: 'keping',
+                hero: 'Uang Logam Aluminium',
+                // Perak terang khas koin 500
+                cardBg: 'bg-gradient-to-br from-gray-50 to-slate-100 border-gray-200',
+                badgeBg: 'bg-gray-500 text-white',
+                textColor: 'text-gray-800',
+                subColor: 'text-gray-500',
+                iconColor: 'text-gray-400'
+            },
+            {
+                value: 200,
+                label: 'Rp 200',
+                type: 'koin',
+                unit: 'keping',
+                hero: 'Uang Logam Aluminium',
+                cardBg: 'bg-gradient-to-br from-zinc-50 to-neutral-100 border-zinc-200',
+                badgeBg: 'bg-zinc-500 text-white',
+                textColor: 'text-zinc-800',
+                subColor: 'text-zinc-500',
+                iconColor: 'text-zinc-400'
+            },
+            {
+                value: 100,
+                label: 'Rp 100',
+                type: 'koin',
+                unit: 'keping',
+                hero: 'Uang Logam Aluminium',
+                cardBg: 'bg-gradient-to-br from-stone-50 to-stone-100 border-stone-200',
+                badgeBg: 'bg-stone-500 text-white',
+                textColor: 'text-stone-800',
+                subColor: 'text-stone-500',
+                iconColor: 'text-stone-400'
+            }
+        ];
+
+        // State Aplikasi
+        let state = {
+            totalBill: 0,
+            amountPaid: 0,
+            currentDisplayedChange: 0,
+            breakdown: [],
+            animationFrameId: null
+        };
+
+        // Elemen DOM
+        const el = {
+            inputTotal: document.getElementById('inputTotal'),
+            inputPaid: document.getElementById('inputPaid'),
+            btnExact: document.getElementById('btnExact'),
+            btnReset: document.getElementById('btnReset'),
+            btnCopy: document.getElementById('btnCopy'),
+            quickCashBtns: document.querySelectorAll('.quick-cash'),
+            quickAddBtns: document.querySelectorAll('.quick-add'),
+            statusCard: document.getElementById('statusCard'),
+            statusAccent: document.getElementById('statusAccent'),
+            statusBadge: document.getElementById('statusBadge'),
+            statusLabel: document.getElementById('statusLabel'),
+            changeCurrency: document.getElementById('changeCurrency'),
+            changeDisplay: document.getElementById('changeDisplay'),
+            shortageAlert: document.getElementById('shortageAlert'),
+            shortageAmount: document.getElementById('shortageAmount'),
+            exactAlert: document.getElementById('exactAlert'),
+            emptyBreakdown: document.getElementById('emptyBreakdown'),
+            breakdownGrid: document.getElementById('breakdownGrid'),
+            totalPiecesBadge: document.getElementById('totalPiecesBadge'),
+            toast: document.getElementById('toastNotification'),
+            toastMessage: document.getElementById('toastMessage')
+        };
+
+        /**
+         * Format angka ke string ribuan Indonesia (contoh: 50000 -> "50.000")
+         */
+        function formatNumber(num) {
+            if (!num && num !== 0) return '';
+            return Math.abs(Math.round(num)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
+
+        /**
+         * Parse string berformat ribuan menjadi integer murni
+         */
+        function parseNumber(str) {
+            const cleaned = str.replace(/\D/g, '');
+            return cleaned ? parseInt(cleaned, 10) : 0;
+        }
+
+        /**
+         * Animasi angka halus (smooth counter) untuk total kembalian
+         */
+        function animateValue(targetValue) {
+            if (state.animationFrameId) {
+                cancelAnimationFrame(state.animationFrameId);
+            }
+
+            const startValue = state.currentDisplayedChange;
+            const duration = 350; // ms
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease out quartic
+                const ease = 1 - Math.pow(1 - progress, 4);
+                const current = Math.round(startValue + (targetValue - startValue) * ease);
+
+                state.currentDisplayedChange = current;
+                el.changeDisplay.textContent = formatNumber(current);
+
+                if (progress < 1) {
+                    state.animationFrameId = requestAnimationFrame(update);
+                } else {
+                    state.currentDisplayedChange = targetValue;
+                    el.changeDisplay.textContent = formatNumber(targetValue);
+                }
+            }
+
+            state.animationFrameId = requestAnimationFrame(update);
+        }
+
+        /**
+         * Algoritma Greedy untuk menghitung rincian pecahan Rupiah terkecil
+         */
+        function calculateGreedyBreakdown(changeAmount) {
+            let remaining = changeAmount;
+            const result = [];
+
+            for (const denom of RUPIAH_DENOMINATIONS) {
+                if (remaining >= denom.value) {
+                    const count = Math.floor(remaining / denom.value);
+                    remaining = remaining % denom.value;
+                    result.push({
+                        ...denom,
+                        count,
+                        subtotal: count * denom.value
+                    });
+                }
+            }
+
+            return { items: result, unallocated: remaining };
+        }
+
+        /**
+         * Render kartu pecahan uang ke dalam grid
+         */
+        function renderBreakdown(breakdownItems, unallocated) {
+            el.breakdownGrid.innerHTML = '';
+
+            if (breakdownItems.length === 0 && unallocated === 0) {
+                el.emptyBreakdown.classList.remove('hidden');
+                el.breakdownGrid.classList.add('hidden');
+                el.totalPiecesBadge.classList.add('hidden');
+                return;
+            }
+
+            el.emptyBreakdown.classList.add('hidden');
+            el.breakdownGrid.classList.remove('hidden');
+            el.breakdownGrid.classList.add('grid');
+
+            let totalPieces = 0;
+
+            breakdownItems.forEach((item, index) => {
+                totalPieces += item.count;
+                const card = document.createElement('div');
+                card.className = `relative p-4 rounded-2xl border ${item.cardBg} shadow-sm flex items-center justify-between gap-3 transition-transform duration-200 hover:-translate-y-0.5 animate-fade-in-up`;
+                card.style.animationDelay = `${index * 45}ms`;
+
+                const iconName = item.type === 'kertas' ? 'banknote' : 'circle-dot';
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-white/80 backdrop-blur-sm flex items-center justify-center shrink-0 shadow-xs ${item.iconColor}">
+                            <i data-lucide="${iconName}" class="w-5 h-5"></i>
+                        </div>
+                        <div class="truncate">
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-mono font-extrabold text-sm sm:text-base ${item.textColor}">${item.label}</span>
+                            </div>
+                            <p class="text-[11px] font-medium ${item.subColor} truncate">${item.hero}</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-mono font-bold ${item.badgeBg} shadow-xs">
+                            ${item.count}x
+                        </span>
+                        <p class="text-[10px] font-semibold ${item.subColor} mt-1 uppercase tracking-wider">${item.unit}</p>
+                    </div>
+                `;
+                el.breakdownGrid.appendChild(card);
+            });
+
+            // Jika ada sisa receh di bawah Rp 100 (misal Rp 50)
+            if (unallocated > 0) {
+                const remainderCard = document.createElement('div');
+                remainderCard.className = 'sm:col-span-2 p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-xs text-amber-800 flex items-center justify-between animate-fade-in-up';
+                remainderCard.innerHTML = `
+                    <span class="flex items-center gap-2 font-medium">
+                        <i data-lucide="info" class="w-4 h-4 text-amber-500"></i>
+                        Sisa pembulatan di bawah Rp 100
+                    </span>
+                    <span class="font-mono font-bold">Rp ${formatNumber(unallocated)}</span>
+                `;
+                el.breakdownGrid.appendChild(remainderCard);
+            }
+
+            el.totalPiecesBadge.textContent = `${totalPieces} Pecahan`;
+            el.totalPiecesBadge.classList.remove('hidden');
+
+            // Re-inisialisasi ikon Lucide untuk elemen baru
+            lucide.createIcons();
+        }
+
+        /**
+         * Perbarui seluruh tampilan UI berdasarkan state saat ini
+         */
+        function updateUI() {
+            const { totalBill, amountPaid } = state;
+            const diff = amountPaid - totalBill;
+
+            // Reset tampilan alert
+            el.shortageAlert.classList.add('hidden');
+            el.exactAlert.classList.add('hidden');
+
+            // Kondisi 1: Belum ada input sama sekali
+            if (totalBill === 0 && amountPaid === 0) {
+                el.statusAccent.className = 'absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-400 via-purple-400 to-teal-400';
+                el.statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600 mb-3';
+                el.statusBadge.innerHTML = '<i data-lucide="info" class="w-3.5 h-3.5"></i> Menunggu Input';
+                el.statusLabel.textContent = 'Total Uang Kembalian';
+                el.changeCurrency.className = 'text-xl sm:text-2xl font-bold text-slate-400';
+                el.changeDisplay.className = 'text-3xl sm:text-5xl font-mono font-extrabold tracking-tight text-slate-800';
+                el.btnCopy.disabled = true;
+
+                animateValue(0);
+                state.breakdown = [];
+                renderBreakdown([], 0);
+                lucide.createIcons();
+                return;
+            }
+
+            // Kondisi 2: Uang dibayar kurang dari total belanja
+            if (diff < 0) {
+                const shortage = Math.abs(diff);
+                el.statusAccent.className = 'absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-rose-400 to-pink-500';
+                el.statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-700 mb-3';
+                el.statusBadge.innerHTML = '<i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Pembayaran Kurang';
+                el.statusLabel.textContent = 'Kekurangan Pembayaran';
+                el.changeCurrency.className = 'text-xl sm:text-2xl font-bold text-rose-400';
+                el.changeDisplay.className = 'text-3xl sm:text-5xl font-mono font-extrabold tracking-tight text-rose-600';
+                el.btnCopy.disabled = true;
+
+                el.shortageAmount.textContent = `Rp ${formatNumber(shortage)}`;
+                el.shortageAlert.classList.remove('hidden');
+
+                animateValue(shortage);
+                state.breakdown = [];
+                renderBreakdown([], 0);
+                lucide.createIcons();
+                return;
+            }
+
+            // Kondisi 3: Uang Pas (diff === 0)
+            if (diff === 0) {
+                el.statusAccent.className = 'absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-400 to-teal-500';
+                el.statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 mb-3';
+                el.statusBadge.innerHTML = '<i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Lunas / Uang Pas';
+                el.statusLabel.textContent = 'Total Uang Kembalian';
+                el.changeCurrency.className = 'text-xl sm:text-2xl font-bold text-emerald-500';
+                el.changeDisplay.className = 'text-3xl sm:text-5xl font-mono font-extrabold tracking-tight text-emerald-600';
+                el.btnCopy.disabled = false;
+
+                el.exactAlert.classList.remove('hidden');
+
+                animateValue(0);
+                state.breakdown = [];
+                renderBreakdown([], 0);
+                lucide.createIcons();
+                return;
+            }
+
+            // Kondisi 4: Ada Kembalian (diff > 0)
+            el.statusAccent.className = 'absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-teal-400 via-emerald-400 to-indigo-400';
+            el.statusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-teal-100 text-teal-800 mb-3';
+            el.statusBadge.innerHTML = '<i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Kembalian Tersedia';
+            el.statusLabel.textContent = 'Total Uang Kembalian';
+            el.changeCurrency.className = 'text-xl sm:text-2xl font-bold text-teal-500';
+            el.changeDisplay.className = 'text-3xl sm:text-5xl font-mono font-extrabold tracking-tight text-slate-800';
+            el.btnCopy.disabled = false;
+
+            animateValue(diff);
+            const { items, unallocated } = calculateGreedyBreakdown(diff);
+            state.breakdown = items;
+            renderBreakdown(items, unallocated);
+            lucide.createIcons();
+        }
+
+        /**
+         * Handler input dengan pemformatan ribuan otomatis
+         */
+        function handleCurrencyInput(inputElement, stateKey) {
+            const rawValue = parseNumber(inputElement.value);
+            state[stateKey] = rawValue;
+            inputElement.value = rawValue > 0 ? formatNumber(rawValue) : '';
+            updateUI();
+        }
+
+        /**
+         * Tampilkan Toast Notification estetis
+         */
+        let toastTimeout;
+        function showToast(message) {
+            el.toastMessage.textContent = message;
+            el.toast.classList.remove('opacity-0', 'translate-y-4');
+            el.toast.classList.add('opacity-100', 'translate-y-0');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                el.toast.classList.remove('opacity-100', 'translate-y-0');
+                el.toast.classList.add('opacity-0', 'translate-y-4');
+            }, 2800);
+        }
+
+        /**
+         * Generate teks struk rapi & salin ke clipboard
+         */
+        function copyReceiptToClipboard() {
+            const { totalBill, amountPaid, breakdown } = state;
+            const change = amountPaid - totalBill;
+            if (change < 0) return;
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+
+            let receiptLines = [
+                '🧾 *STRUK TRANSAKSI KASIRPINTAR*',
+                `📅 ${dateStr}`,
+                '--------------------------------',
+                `Total Belanja : Rp ${formatNumber(totalBill)}`,
+                `Uang Dibayar  : Rp ${formatNumber(amountPaid)}`,
+                `Kembalian     : Rp ${formatNumber(change)}`,
+                '--------------------------------'
+            ];
+
+            if (change === 0) {
+                receiptLines.push('Status        : Uang Pas (Lunas)');
+            } else if (breakdown.length > 0) {
+                receiptLines.push('💵 *Rincian Pecahan Kembalian:*');
+                breakdown.forEach(item => {
+                    receiptLines.push(`• ${item.label} x ${item.count} ${item.unit}`);
+                });
+            }
+
+            receiptLines.push('--------------------------------');
+            receiptLines.push('Terima kasih telah berbelanja! ✨');
+
+            const textToCopy = receiptLines.join('\n');
+
+            // Gunakan textarea tersembunyi + execCommand('copy') agar kompatibel di semua browser/iframe
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Rincian struk berhasil disalin ke clipboard!');
+            } catch (err) {
+                showToast('Gagal menyalin rincian struk.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Event Listeners Input
+        el.inputTotal.addEventListener('input', () => handleCurrencyInput(el.inputTotal, 'totalBill'));
+        el.inputPaid.addEventListener('input', () => handleCurrencyInput(el.inputPaid, 'amountPaid'));
+
+        // Event Listener Tombol Uang Pas
+        el.btnExact.addEventListener('click', () => {
+            if (state.totalBill <= 0) {
+                showToast('Masukkan Total Belanja terlebih dahulu');
+                el.inputTotal.focus();
+                return;
+            }
+            state.amountPaid = state.totalBill;
+            el.inputPaid.value = formatNumber(state.amountPaid);
+            updateUI();
+        });
+
+        // Event Listener Tombol Nominal Cepat (Set nilai)
+        el.quickCashBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const amount = parseInt(btn.getAttribute('data-amount'), 10);
+                state.amountPaid = amount;
+                el.inputPaid.value = formatNumber(amount);
+                updateUI();
+            });
+        });
+
+        // Event Listener Tombol Tambah Nominal (+ Rp 5.000)
+        el.quickAddBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const addAmount = parseInt(btn.getAttribute('data-add'), 10);
+                state.amountPaid += addAmount;
+                el.inputPaid.value = formatNumber(state.amountPaid);
+                updateUI();
+            });
+        });
+
+        // Event Listener Reset
+        el.btnReset.addEventListener('click', () => {
+            state.totalBill = 0;
+            state.amountPaid = 0;
+            el.inputTotal.value = '';
+            el.inputPaid.value = '';
+            updateUI();
+            el.inputTotal.focus();
+            showToast('Kalkulator telah direset');
+        });
+
+        // Event Listener Salin Struk
+        el.btnCopy.addEventListener('click', copyReceiptToClipboard);
+
+        // Inisialisasi ikon Lucide saat halaman dimuat
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            el.inputTotal.focus();
+        });
+    </script>
+</body>
+</html>
